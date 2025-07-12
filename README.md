@@ -1,78 +1,107 @@
-# 🏠 IoT Home Automation using ESP8266 with Google Home and Manual Control
+# 🏠 Smart Home Automation using ESP8266 | Cloud-Based Control with Sensors & Servo
 
-This project demonstrates a smart home automation system that controls appliances using the **NodeMCU ESP8266**. It supports **dual control**:  
-- 📱 Voice control via **Google Home App**  
-- ✋ Manual control via **physical switches**
+This project demonstrates a **cloud-connected smart home system** built using the **ESP8266 NodeMCU**, enabling remote control of appliances and monitoring environmental data through the **Arduino IoT Cloud**. It supports:
 
-No third-party platforms like IFTTT are used — the system works over **local Wi-Fi communication**, providing fast and reliable smart control.
+- Switching **lights and fans** (via relay modules)
+- Operating a **servo-based gate**
+- Monitoring **temperature and humidity** in real-time with a **DHT11** sensor
 
----
-
-## 🚀 Features
-
-- 🎙️ Voice commands through Google Assistant (via Google Home App)
-- ✋ Manual switch-based control
-- 🔁 Real-time state sync — use either method to toggle appliances
-- 🌐 Works over local Wi-Fi (no external cloud or IFTTT dependency)
-- 💡 Controls lights, fans, or any Door Gate via relays
+Everything runs over Wi-Fi, ensuring seamless home control from anywhere.
 
 ---
 
-## 🧰 Tech Stack
+## 🌟 Highlights
 
-| Component     | Description                         |
-|--------------|-------------------------------------|
-| NodeMCU ESP8266 | Wi-Fi-enabled microcontroller        |
-| Google Home App | Voice assistant for appliance control |
-| Relay Module  | Controls AC loads (light, fan, etc.) |
-| Manual Switch | For physical control (toggle/push)  |
-| Arduino IDE   | To program the ESP8266              |
+- 🔌 Control home appliances remotely
+- 🚪 Open and close gate using servo motor
+- 🌡️ Monitor room temperature and humidity live
+- ☁️ Secure cloud connectivity with Arduino IoT Cloud
+- 🔄 Auto Wi-Fi reconnection logic for reliability
 
 ---
 
-## 🔌 System Overview
+## 🧰 Components Required
 
-- The ESP8266 is connected to relays and manual switches.
-- Voice commands from Google Home trigger appliance actions (either via HTTP requests from the app or via routines).
-- Manual switches are wired to GPIOs and also toggle appliance state.
-- State is handled efficiently on the microcontroller side.
-
----
-
-## 🛠️ Hardware Requirements
-
-- ✅ NodeMCU ESP8266
-- ✅ Relay Module (1/2/4 Channel)
-- ✅ Manual Switches (push or toggle)
-- ✅ Appliances (Bulbs/Fans)
-- ✅ Breadboard, jumper wires
-- ✅ Power supply (5V)
+| Part              | Function                             |
+|------------------|--------------------------------------|
+| ESP8266 NodeMCU  | Wi-Fi-enabled microcontroller         |
+| Relay Module     | Used to switch light & fan            |
+| DHT11 Sensor     | Measures ambient temperature & humidity |
+| Servo Motor      | Controls mechanical gate action       |
+| Jumper Wires     | Circuit connections                   |
 
 ---
 
-## 🔧 Setup Instructions
+## 🧪 Software Stack
 
-### 1. Circuit Setup
-- Connect **relays** to digital GPIO pins of ESP8266.
-- Connect **manual switches** to GPIOs using pull-up/pull-down configuration.
-- Relay NO (Normally Open) connected to appliance wiring.
-
-### 2. ESP8266 Programming
-- Open the `.ino` file in Arduino IDE.
-- Update your **Wi-Fi SSID and Password** in the code.
-- Upload the code to your ESP8266 via USB.
-
-### 3. Google Home Integration
-- Add your ESP device to **Google Home** via platforms like **Smart Life / Tuya / custom firmware (e.g., Tasmota/ESPHome)**.
-- Create scenes or routines in the Google Home App that send commands to ESP’s IP (e.g., using HTTP or MQTT).
-- Test control using voice:  
-  _“Hey Google, turn on the living room light.”_
+- **Arduino IDE** – Code development & upload
+- **Arduino IoT Cloud** – Dashboard for live control
+- **Libraries Used**:
+  - `ESP8266WiFiMulti.h`
+  - `DHT.h`
+  - `Servo.h`
 
 ---
 
-## 📱 Control Methods
+## 🔌 Wiring & Pin Mapping
 
-| Method  | Tool/Platform      | Description              |
-|---------|--------------------|--------------------------|
-| Voice   | Google Assistant    | Via Google Home app      |
-| Manual  | Physical Switch     | Wired to ESP GPIO pins   |
+| Device           | Connected to ESP8266 Pin |
+|------------------|--------------------------|
+| Light Relay      | D1 (GPIO5)               |
+| Fan Relay        | D2 (GPIO4)               |
+| Servo Motor      | D5 (GPIO14)              |
+| DHT11 Sensor     | D8 (GPIO15)              |
+
+---
+
+## 🔄 Functionality Overview
+
+- Upon startup, the ESP8266 connects to the configured Wi-Fi.
+- Sensor values are continuously read and uploaded to the cloud dashboard.
+- Based on user input from the cloud:
+  - **Relays** toggle lights and fan.
+  - **Servo motor** triggers gate mechanism (open/close).
+- If Wi-Fi drops, the device attempts reconnection automatically.
+
+---
+
+## 🌐 Cloud Variables (Arduino IoT Cloud)
+
+| Cloud Variable  | Data Type | Role                         |
+|-----------------|-----------|------------------------------|
+| `light`         | Boolean   | Light control (ON/OFF)       |
+| `fan`           | Boolean   | Fan control (ON/OFF)         |
+| `gateControl`   | Boolean   | Gate servo trigger           |
+| `temperature`   | Float     | Current temperature (°C)     |
+| `humidity`      | Float     | Current humidity (%)         |
+
+---
+
+## ⚙️ Setup Instructions
+
+1. Open Arduino IDE and install necessary libraries.
+2. Include your **Wi-Fi SSID and password** in the sketch.
+3. Sync your sketch with **Arduino IoT Cloud** and ensure variables match.
+4. Wire the components as per the table above.
+5. Upload code to ESP8266 and monitor via serial or cloud dashboard.
+
+---
+
+## 🧠 Logic Snapshot
+
+```cpp
+if (WiFi.status() != WL_CONNECTED) {
+  WiFi.begin(ssid, password);
+}
+
+temperature = dht.readTemperature();
+humidity = dht.readHumidity();
+
+if (light) digitalWrite(relay1, HIGH); else digitalWrite(relay1, LOW);
+if (fan) digitalWrite(relay2, HIGH); else digitalWrite(relay2, LOW);
+
+if (gateControl) {
+  servo.write(90);  // Open
+  delay(1500);
+  servo.write(0);   // Close
+}
